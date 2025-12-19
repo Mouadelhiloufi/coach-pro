@@ -1,3 +1,8 @@
+<?php
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
+?>
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -12,14 +17,14 @@
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between h-16">
                 <div class="flex items-center">
-                    <a href="index.html" class="flex items-center">
+                    <a href="coach_page.php" class="flex items-center">
                         <i class="fas fa-dumbbell text-indigo-600 text-2xl mr-2"></i>
                         <span class="text-2xl font-bold text-indigo-600">CoachSport</span>
                     </a>
                 </div>
                 <div class="flex items-center space-x-4">
-                    <a href="coach-dashboard.html" class="text-gray-700 hover:text-indigo-600 px-3 py-2 rounded-md font-medium">Dashboard</a>
-                    <a href="coach-profile.html" class="text-indigo-600 px-3 py-2 rounded-md font-medium">
+                    <a href="coach_page.php" class="text-gray-700 hover:text-indigo-600 px-3 py-2 rounded-md font-medium">Dashboard</a>
+                    <a href="" class="text-indigo-600 px-3 py-2 rounded-md font-medium">
                         <i class="fas fa-user mr-1"></i> Profil
                     </a>
                     

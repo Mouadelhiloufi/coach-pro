@@ -1,4 +1,7 @@
 <?php
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
     include("../sources/db/db.php");
 
 
@@ -333,6 +336,7 @@ function validateForm() {
 
     if(password!=confirmPassword){
         showError('confirmPassword',"veuillez entrer le meme code dans la verification de mot de passe")
+        isValid = false;
     }
     
     // Validation ROLE

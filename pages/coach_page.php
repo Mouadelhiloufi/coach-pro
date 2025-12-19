@@ -1,10 +1,44 @@
 <?php
+include("../sources/db/db.php");
 session_start();
+
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
 
 if(!isset($_SESSION["user_id"]) || $_SESSION["user_role"] != "coach"){
     header("location: ../pages/athlete_page.php");
     exit();
 }
+
+$sql="SELECT 
+    R.client_id as id, 
+    U.email,
+    U.telephone,
+    U.nom, 
+    U.prenom, 
+    U.role,
+    S.nom as sport_nom, 
+    R.date,
+    R.heure,
+    R.statut 
+FROM users U 
+INNER JOIN client CL ON U.id = CL.id_user
+LEFT JOIN reservation R ON CL.id = R.client_id
+LEFT JOIN coach C ON R.coach_id = C.id
+LEFT JOIN sport_coach ON C.id = sport_coach.coach_id 
+LEFT JOIN sport S ON S.id = sport_coach.sport_id 
+WHERE U.role = 'client'";
+
+    $result=mysqli_query($conn,$sql);
+
+    $clients=[];
+
+    while($row=mysqli_fetch_assoc($result)){
+        $clients[]=$row;
+    }
+
+
 ?>
 
 
@@ -25,13 +59,13 @@ if(!isset($_SESSION["user_id"]) || $_SESSION["user_role"] != "coach"){
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between h-16">
                 <div class="flex items-center">
-                    <a href="index.html" class="flex items-center">
+                    <a href="" class="flex items-center">
                         <i class="fas fa-dumbbell text-indigo-600 text-2xl mr-2"></i>
                         <span class="text-2xl font-bold text-indigo-600">CoachSport</span>
                     </a>
                 </div>
                 <div class="flex items-center space-x-4">
-                    <a href="coach_page.php" class="text-indigo-600 px-3 py-2 rounded-md font-medium">Dashboard</a>
+                    <a href="" class="text-indigo-600 px-3 py-2 rounded-md font-medium">Dashboard</a>
                     <a href="profile_coach.php" class="text-gray-700 hover:text-indigo-600 px-3 py-2 rounded-md font-medium">
                         <i class="fas fa-user mr-1"></i> Profil
                     </a>
@@ -49,7 +83,7 @@ if(!isset($_SESSION["user_id"]) || $_SESSION["user_role"] != "coach"){
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <!-- Welcome section with PHP-generated name -->
         <div class="bg-white rounded-lg shadow-md p-6 mb-8">
-            <h1 class="text-3xl font-bold text-gray-900 mb-2">Dashboard Coach - <span class="text-indigo-600">Jean Dupont</span></h1>
+            <h1 class="text-3xl font-bold text-gray-900 mb-2">Dashboard Coach - <span class="text-indigo-600"><?php echo $_SESSION["user_prenom"]?></span></h1>
             <p class="text-gray-600">Gérez vos réservations, disponibilités et profil professionnel</p>
         </div>
 
@@ -113,40 +147,140 @@ if(!isset($_SESSION["user_id"]) || $_SESSION["user_role"] != "coach"){
             </div>
 
             <!-- Example booking card - PHP will generate these -->
-            <div class="space-y-4">
-                <div class="border border-orange-200 bg-orange-50 rounded-lg p-4">
-                    <div class="flex justify-between items-start">
-                        <div class="flex-1">
-                            <h3 class="text-lg font-semibold text-gray-900">Marie Laurent</h3>
-                            <p class="text-sm text-gray-600 mt-1">
-                                <i class="fas fa-calendar text-indigo-600 mr-2"></i> 18 Décembre 2024
-                            </p>
-                            <p class="text-sm text-gray-600 mt-1">
-                                <i class="fas fa-clock text-indigo-600 mr-2"></i> 10:00 - 11:00
-                            </p>
-                            <p class="text-sm text-gray-600 mt-1">
-                                <i class="fas fa-running text-indigo-600 mr-2"></i> Tennis
-                            </p>
-                        </div>
-                        <div class="flex gap-2">
-                            <form action="backend/accept-booking.php" method="POST" class="inline">
-                                <input type="hidden" name="booking_id" value="1">
-                                <button type="submit" class="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition text-sm">
-                                    <i class="fas fa-check mr-1"></i> Accepter
-                                </button>
-                            </form>
-                            <form action="backend/reject-booking.php" method="POST" class="inline" onsubmit="return confirm('Voulez-vous vraiment refuser cette demande ?')">
-                                <input type="hidden" name="booking_id" value="1">
-                                <button type="submit" class="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 transition text-sm">
-                                    <i class="fas fa-times mr-1"></i> Refuser
-                                </button>
-                            </form>
+
+            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+    <?php foreach ($clients as $client): ?>
+        <?php if($client['role']=="client"): ?>
+        <div class="bg-white rounded-2xl shadow-lg overflow-hidden border border-gray-100 hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
+            <!-- En-tête avec photo -->
+            <div class="relative h-48 bg-gradient-to-br from-green-50 to-emerald-100">
+                <?php if (!empty($client['photo_client'])): ?>
+                    <img style="border-radius:100%; display:block ; margin:auto; object-fit: cover; width: 160px; height: 160px;" src="<?= $client['photo_client'] ?>" 
+                         alt="<?= $client['prenom'] . ' ' . $client['nom'] ?>" 
+                         class="w-full h-full object-cover">
+                <?php else: ?>
+                    <div class="w-full h-full flex items-center justify-center">
+                        <div class="text-center">
+                            <i class="fas fa-user-circle text-gray-400 text-7xl mb-2"></i>
+                            <p class="text-gray-500 font-medium">Client</p>
                         </div>
                     </div>
+                <?php endif; ?>
+                
+                <!-- Badge statut réservation -->
+                <?php if ($client['statut']): ?>
+                <div class="absolute top-4 right-4 px-3 py-1.5 rounded-full text-sm font-bold shadow-lg
+                    <?php 
+                    switch($client['statut']) {
+                        case 'confirmée': echo 'bg-green-500 text-white'; break;
+                        case 'en attente': echo 'bg-yellow-500 text-white'; break;
+                        case 'annulée': echo 'bg-red-500 text-white'; break;
+                        default: echo 'bg-gray-500 text-white';
+                    }
+                    ?>">
+                    <?= ucfirst($client['statut']) ?>
                 </div>
-                <!-- More bookings will be generated by PHP -->
+                <?php endif; ?>
+            </div>
+            
+            <!-- Contenu -->
+            <div class="p-6">
+                <!-- Nom et réservation -->
+                <div class="mb-4">
+                    <h3 class="text-xl font-bold text-gray-900 mb-1">
+                        <?= $client['prenom'] ?> 
+                        <span class="text-emerald-600"><?= $client['nom'] ?></span>
+                    </h3>
+                    <?php if ($client['sport_nom']): ?>
+                    <div class="inline-flex items-center bg-emerald-50 text-emerald-700 px-3 py-1 rounded-lg text-sm">
+                        <i class="fas fa-running mr-2"></i>
+                        <?= $client['sport_nom'] ?>
+                    </div>
+                    <?php endif; ?>
+                </div>
+                
+                <!-- Informations -->
+                <div class="space-y-3 mb-6">
+                    <!-- Email -->
+                    <div class="flex items-center">
+                        <div class="w-8 h-8 bg-blue-50 rounded-lg flex items-center justify-center mr-3">
+                            <i class="fas fa-envelope text-blue-500 text-sm"></i>
+                        </div>
+                        <div>
+                            <p class="text-xs text-gray-500">Email</p>
+                            <p class="text-gray-800 font-medium text-sm"><?= $client['email'] ?></p>
+                        </div>
+                    </div>
+                    
+                    <!-- Téléphone -->
+                    <div class="flex items-center">
+                        <div class="w-8 h-8 bg-green-50 rounded-lg flex items-center justify-center mr-3">
+                            <i class="fas fa-phone text-green-500 text-sm"></i>
+                        </div>
+                        <div>
+                            <p class="text-xs text-gray-500">Téléphone</p>
+                            <p class="text-gray-800 font-medium text-sm"><?= $client['telephone'] ?></p>
+                        </div>
+                    </div>
+                    
+                    <!-- Date de réservation -->
+                    <?php if ($client['date']): ?>
+                    <div class="flex items-center">
+                        <div class="w-8 h-8 bg-purple-50 rounded-lg flex items-center justify-center mr-3">
+                            <i class="fas fa-calendar-alt text-purple-500 text-sm"></i>
+                        </div>
+                        <div>
+                            <p class="text-xs text-gray-500">Réservation</p>
+                            <p class="text-gray-800 font-medium text-sm">
+                                <?= date('d/m/Y', strtotime($client['date'])) ?>
+                            </p>
+                        </div>
+                    </div>
+                    <?php endif; ?>
+                </div>
+                
+                <!-- Biographie (si existe) -->
+                <?php if (!empty($client['biographie'])): ?>
+                <div class="mb-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                    <p class="text-gray-600 text-sm italic">
+                        <i class="fas fa-quote-left text-emerald-300 mr-1"></i>
+                        <?= substr($client['biographie'], 0, 100) . (strlen($client['biographie']) > 100 ? '...' : '') ?>
+                    </p>
+                </div>
+                <?php endif; ?>
+                
+                <!-- Bouton de contact -->
+                <button type="button" onclick="contacterClient(<?= $client['id'] ?>)" 
+                        class="w-full bg-gradient-to-r from-emerald-500 to-emerald-600 text-white py-3 rounded-lg font-semibold hover:from-emerald-600 hover:to-emerald-700 transition-all duration-300 shadow-md hover:shadow-lg flex items-center justify-center">
+                    <i class="fas fa-envelope mr-2"></i>
+                    Contacter ce client
+                </button>
+            </div>
+            
+            <!-- Footer avec note -->
+            <div class="px-6 py-4 bg-gray-50 border-t border-gray-200">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center">
+                        <div class="flex text-yellow-400 mr-2">
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star-half-alt"></i>
+                        </div>
+                        <span class="text-gray-700 font-semibold">4.5</span>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-sm font-medium text-gray-700">Client</p>
+                        <p class="text-xs text-gray-500"><?= $client['role'] ?></p>
+                    </div>
+                </div>
             </div>
         </div>
+        <?php endif; ?>
+    <?php endforeach; ?>
+</div>
+
 
         <!-- Availability Management -->
         <div class="bg-white rounded-lg shadow-md p-6">

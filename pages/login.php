@@ -1,66 +1,70 @@
 <?php
- ob_start();
 session_start();
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
+include("../sources/db/db.php");
 
 
-
-if(isset($_SESSION["user_id"]) && $_SESSION["user_role"] == "client"){
-    header("location: ../pages/athlete_page.php");
-    exit();
-}else if(isset($_SESSION["user_id"]) && $_SESSION["user_role"] == "coach"){
-    header("location: ../pages/coach_page.php");
-    exit();
+if (isset($_SESSION["user_id"])) {
+    if ($_SESSION["user_role"] === "client") {
+        header("Location: ../pages/athlete_page.php");
+        exit();
+    } elseif ($_SESSION["user_role"] === "coach") {
+        header("Location: ../pages/coach_page.php");
+        exit();
+    }
 }
+
+$error = "";
+
+/* Handle login */
+if ($_SERVER["REQUEST_METHOD"] === "POST") {
+
+    $email = $_POST["email"];
+    $password = $_POST["password"];
+
+
+
+    /* Prepared statement (mysqli) */
+    $stmt = $conn->prepare("SELECT id, prenom, password, role FROM users WHERE email = ?");
+    $stmt->bind_param("s", $email);
+    $stmt->execute();
+
+    $result = $stmt->get_result();
     
+    
+    // var_dump($result->fetch_assoc());
+    if ($result->num_rows === 1) {
 
-        include("../sources/db/db.php");
-       
+        $user = $result->fetch_assoc();
+        // var_dump($user['password']);
 
-    if($_SERVER["REQUEST_METHOD"]=="POST"){
-        
-        $email=$_POST["email"];
-        $password=$_POST["password"];
+        if (password_verify($password, $user["password"])) {
 
-        $sql_prepar=$conn->prepare("SELECT * FROM users where email=?");
-        $sql_prepar->bind_param("s",$email);
-        $sql_prepar->execute();
-        $result=$sql_prepar->get_result();
-
-        $rows=$result->num_rows;
-        if($rows==1){
-            $userArr=$result->fetch_assoc();
-
+            $_SESSION["user_id"]   = $user["id"];
+            $_SESSION["user_role"] = $user["role"];
+            $_SESSION["user_prenom"] = $user["prenom"];
+            
             
 
-
-            
-
-            if(password_verify($password, $userArr["password"])){
-
-                 $_SESSION["user_id"]=$userArr["id"];
-                    $_SESSION["user_role"]=$userArr["role"];
-                    $_SESSION["user_prenom"]=$userArr["prenom"];
-                if($userArr["role"]=="client"){
-                    header("location: ../pages/athlete_page.php");
-                   
-                    
-                }else if($userArr["role"]=="coach"){
-                    header("location: ../pages/coach_page.php");
-                   
-                    
-
-                }
-                exit();
+            if ($user["role"] === "client") {
+                header("Location: athlete_page.php");
+            } else {
+                header("Location: ../pages/coach_page.php");
             }
+            exit();
+
+        } else {
+            $error = "Incorrect password";
         }
 
-        
-        
-        
-            
-        
+    } else {
+        $error = "Email not found";
     }
+}
 ?>
+
 
 
 
@@ -77,6 +81,7 @@ if(isset($_SESSION["user_id"]) && $_SESSION["user_role"] == "client"){
 </head>
 <body class="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen">
     <!-- Navigation -->
+    
     <nav class="bg-white shadow-lg">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between h-16">
@@ -103,7 +108,7 @@ if(isset($_SESSION["user_id"]) && $_SESSION["user_role"] == "client"){
 
             <!-- Form ####################################### -->
             <form action="" method="POST" class="space-y-6">
-                <!-- <input type="hidden" name="login" value="1"> -->
+                <input type="hidden" name="login" value="1">
                 <!-- Email -->
                 <div>
                     <label for="email" class="block text-sm font-medium text-gray-700">Email</label>
@@ -146,7 +151,7 @@ if(isset($_SESSION["user_id"]) && $_SESSION["user_role"] == "client"){
 
                 <!-- Submit Button -->
                  
-                <button type="submit" name="login"
+                <button type="submit" 
                     class="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition">
                     <i class="fas fa-sign-in-alt mr-2"></i>
                     Se connecter

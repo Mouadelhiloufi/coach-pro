@@ -1,10 +1,10 @@
 <?php
-$host = "localhost";
-$user = "root";
-$pass = "";
-$db   = "coach_pro";
-
-$conn = new mysqli($host, $user, $pass, $db);
-if ($conn->connect_error) {
-    die("Connection failed");
-}
+    $host = 'localhost';
+    $db='coach_pro';
+    $username='root';
+    $password='';
+    $conn=new mysqli($host,$username,$password,$db);
+    if($conn->connect_error){
+        die('conection not succesefull' . $conn->connect_error);
+    }
+?>
