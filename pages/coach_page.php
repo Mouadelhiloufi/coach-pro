@@ -19,24 +19,49 @@ $sql="SELECT
     U.prenom, 
     U.role,
     S.nom as sport_nom, 
+    R.id,
     R.date,
     R.heure,
     R.statut 
 FROM users U 
 INNER JOIN client CL ON U.id = CL.id_user
-LEFT JOIN reservation R ON CL.id = R.client_id
-LEFT JOIN coach C ON R.coach_id = C.id
-LEFT JOIN sport_coach ON C.id = sport_coach.coach_id 
+inner JOIN reservation R ON CL.id_user = R.client_id
+inner JOIN coach C ON R.coach_id = C.id
+left JOIN sport_coach ON C.id = sport_coach.coach_id 
 LEFT JOIN sport S ON S.id = sport_coach.sport_id 
 WHERE U.role = 'client'";
 
     $result=mysqli_query($conn,$sql);
+    
 
     $clients=[];
 
     while($row=mysqli_fetch_assoc($result)){
         $clients[]=$row;
     }
+    // var_dump($clients);
+
+
+
+    if ($_SERVER["REQUEST_METHOD"] == "POST") {
+
+    if (isset($_POST["confirm"]) && $_POST["confirm"] === "confirmer") {
+
+        $id = (int) $_POST["id_reserv"];
+        $reponse_coach = "UPDATE reservation SET statut='confirmer' WHERE id = $id";
+        mysqli_query($conn, $reponse_coach);
+        header("Location: ".$_SERVER["PHP_SELF"]);
+
+    } else if (isset($_POST["annuler"]) && $_POST["annuler"] === "annuler") {
+
+        $id = (int) $_POST["id_reserv"];
+        $reponse_coach = "UPDATE reservation SET statut='annuler' WHERE id = $id";
+        mysqli_query($conn, $reponse_coach);
+                header("Location: ".$_SERVER["PHP_SELF"]);
+
+    }
+}
+
 
 
 ?>
@@ -150,7 +175,8 @@ WHERE U.role = 'client'";
 
             <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
     <?php foreach ($clients as $client): ?>
-        <?php if($client['role']=="client"): ?>
+       
+            <?php if($client["role"] == "client" && $client["id"] == $_SESSION["user_id"]): ?> 
         <div class="bg-white rounded-2xl shadow-lg overflow-hidden border border-gray-100 hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
             <!-- En-tête avec photo -->
             <div class="relative h-48 bg-gradient-to-br from-green-50 to-emerald-100">
@@ -178,6 +204,7 @@ WHERE U.role = 'client'";
                         default: echo 'bg-gray-500 text-white';
                     }
                     ?>">
+                    <!-- erooooor hereee -->
                     <?= ucfirst($client['statut']) ?>
                 </div>
                 <?php endif; ?>
@@ -239,22 +266,41 @@ WHERE U.role = 'client'";
                     <?php endif; ?>
                 </div>
                 
-                <!-- Biographie (si existe) -->
-                <?php if (!empty($client['biographie'])): ?>
-                <div class="mb-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
-                    <p class="text-gray-600 text-sm italic">
-                        <i class="fas fa-quote-left text-emerald-300 mr-1"></i>
-                        <?= substr($client['biographie'], 0, 100) . (strlen($client['biographie']) > 100 ? '...' : '') ?>
-                    </p>
-                </div>
-                <?php endif; ?>
+                
                 
                 <!-- Bouton de contact -->
-                <button type="button" onclick="contacterClient(<?= $client['id'] ?>)" 
+                        
+                    <div class="flex w-full gap-4">
+    <form action="" method="POST" class="flex-1">
+        <input type="hidden" name="confirm" value="confirmer">
+        <input type="hidden" name="id_reserv" value="<?= $client['id'] ?>">
+        <button type="submit"
+            class="w-full bg-gradient-to-r from-emerald-500 to-emerald-600 text-white py-3 rounded-lg font-semibold hover:from-emerald-600 hover:to-emerald-700 transition-all duration-300 shadow-md hover:shadow-lg flex items-center justify-center">
+            Confirmer
+        </button>
+    </form>
+
+    <form action="" method="POST" class="flex-1">
+        <input type="hidden" name="id_reserv" value="<?= $client['id'] ?>">
+        <input type="hidden" name="annuler" value="annuler">
+        <button type="submit"
+            class="w-full bg-red-400 text-white py-3 rounded-lg font-semibold hover:bg-red-500 transition-all duration-300 shadow-md hover:shadow-lg flex items-center justify-center">
+            Annuler
+        </button>
+    </form>
+</div>
+
+
+
+
+
+
+
+                <!-- <button type="button" onclick="contacterClient(" 
                         class="w-full bg-gradient-to-r from-emerald-500 to-emerald-600 text-white py-3 rounded-lg font-semibold hover:from-emerald-600 hover:to-emerald-700 transition-all duration-300 shadow-md hover:shadow-lg flex items-center justify-center">
                     <i class="fas fa-envelope mr-2"></i>
                     Contacter ce client
-                </button>
+                </button> -->
             </div>
             
             <!-- Footer avec note -->

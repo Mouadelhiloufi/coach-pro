@@ -15,6 +15,7 @@ error_reporting(E_ALL);
             $phone=$_POST["phone"];
             $password=$_POST["password"];
             $level=$_POST["level"];
+            
             $role="client";
             $password_hashed=password_hash($password,PASSWORD_DEFAULT);
 

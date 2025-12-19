@@ -32,7 +32,29 @@ if(!isset($_SESSION["user_id"]) || $_SESSION["user_role"] != "client"){
             $reservations[]=$row;
         }
     }   
-// var_dump($reservations["id"]);
+
+
+    $sql="SELECT count(U.id) as total_seances from users U 
+    inner join coach C on U.id = C.id_user left join reservation R on C.id=R.coach_id 
+    left join client CL on CL.id = R.client_id left join sport_coach on C.id =sport_coach.coach_id 
+    left join sport S on S.id = sport_coach.sport_id 
+    where U.role='coach'";
+    $count_reserv=mysqli_query($conn,$sql);
+    while($row=mysqli_fetch_assoc($count_reserv)){
+        $res_count=$row;
+    }
+
+    $sql_confirm="SELECT count(U.id) as seances_valid from users U 
+    inner join coach C on U.id = C.id_user left join reservation R on C.id=R.coach_id 
+    left join client CL on CL.id = R.client_id left join sport_coach on C.id =sport_coach.coach_id 
+    left join sport S on S.id = sport_coach.sport_id 
+    where U.role='coach' and R.statut='confirmer'";
+    $count_reserv=mysqli_query($conn,$sql_confirm);
+    while($row=mysqli_fetch_assoc($count_reserv)){
+        $confirm_count=$row;
+    }
+    
+
 
 ?>
 
@@ -98,7 +120,7 @@ if(!isset($_SESSION["user_id"]) || $_SESSION["user_role"] != "client"){
                 <div class="flex items-center justify-between">
                     <div>
                         <p class="text-green-100 text-sm">Séances validées</p>
-                        <p class="text-3xl font-bold">12</p>
+                        <p class="text-3xl font-bold"><?php echo $confirm_count["seances_valid"] ?></p>
                     </div>
                     <i class="fas fa-check-circle text-4xl text-green-200"></i>
                 </div>
@@ -107,7 +129,7 @@ if(!isset($_SESSION["user_id"]) || $_SESSION["user_role"] != "client"){
                 <div class="flex items-center justify-between">
                     <div>
                         <p class="text-purple-100 text-sm">Total séances</p>
-                        <p class="text-3xl font-bold">15</p>
+                        <p class="text-3xl font-bold"><?php echo $res_count["total_seances"] ?></p>
                     </div>
                     <i class="fas fa-chart-line text-4xl text-purple-200"></i>
                 </div>
@@ -148,11 +170,7 @@ if(!isset($_SESSION["user_id"]) || $_SESSION["user_role"] != "client"){
                         </div>
                         <div class="flex flex-col gap-2">
                             <span class="px-3 py-1 bg-orange-200 text-orange-900 text-xs font-medium rounded-full"><?= $reserv["statut"]?></span>
-                            <form action="backend/cancel-booking.php" method="POST" onsubmit="return confirm('Voulez-vous vraiment annuler cette réservation ?')">
-                                <input type="hidden" name="booking_id" value="1">
-                                <button type="submit" class="text-red-600 hover:text-red-800 text-sm">
-                                    <i class="fas fa-times mr-1"></i> Annuler
-                                </button>
+                            
                             </form>
                         </div>
                     </div>
